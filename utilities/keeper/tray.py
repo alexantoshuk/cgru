@@ -176,19 +176,58 @@ class Tray(QtWidgets.QSystemTrayIcon):
 
             for soft in software.Names:
                 icon = software.getIcon(soft)
-                if icon is None:
-                    action = QtWidgets.QAction(soft, self)
+                versions = software.getVersions(soft)
+                if versions:
+                    soft_menu = QtWidgets.QMenu(soft, self.menu['Software'])
+                    if icon is not None:
+                        soft_menu.setIcon(icon)
+                    default_loc = software.getDefaultLocation(soft)
+                    for label, path in versions:
+                        action = QtWidgets.QAction(label, self)
+                        if default_loc and os.path.normpath(path) == os.path.normpath(default_loc):
+                            action.setText(label + '  [default]')
+                        action.triggered.connect(
+                            lambda checked=False, s=soft, p=path: software.startSoftAt(s, p)
+                        )
+                        soft_menu.addAction(action)
+                    soft_menu.addSeparator()
+                    action = QtWidgets.QAction('Default version', self)
+                    eval("action.triggered.connect(software.start%s)" % soft)
+                    soft_menu.addAction(action)
+                    self.menu['Software'].addMenu(soft_menu)
                 else:
-                    action = QtWidgets.QAction(icon, soft, self)
-                eval("action.triggered.connect(software.start%s)" % soft)
-                self.menu['Software'].addAction(action)
+                    if icon is None:
+                        action = QtWidgets.QAction(soft, self)
+                    else:
+                        action = QtWidgets.QAction(icon, soft, self)
+                    eval("action.triggered.connect(software.start%s)" % soft)
+                    self.menu['Software'].addAction(action)
             # Software setup:
             self.menu['Setup Soft'] = QtWidgets.QMenu('Setup Soft')
             self.menu['Software'].addMenu(self.menu['Setup Soft'])
             for soft in software.Names:
-                action = QtWidgets.QAction(soft, self)
-                eval("action.triggered.connect(software.locate%s)" % soft)
-                self.menu['Setup Soft'].addAction(action)
+                versions = software.getVersions(soft)
+                if versions:
+                    setup_menu = QtWidgets.QMenu(soft, self.menu['Setup Soft'])
+                    default_loc = software.getDefaultLocation(soft)
+                    for label, path in versions:
+                        action = QtWidgets.QAction(label, self)
+                        if default_loc and os.path.normpath(path) == os.path.normpath(default_loc):
+                            action.setCheckable(True)
+                            action.setChecked(True)
+                        action.triggered.connect(
+                            lambda checked=False, s=soft, p=path: software.setDefaultVersion(s, p)
+                        )
+                        setup_menu.addAction(action)
+                    setup_menu.addSeparator()
+                    action = QtWidgets.QAction('Browse executable...', self)
+                    eval("action.triggered.connect(software.locate%s)" % soft)
+                    setup_menu.addAction(action)
+                    self.menu['Setup Soft'].addMenu(setup_menu)
+                else:
+                    action = QtWidgets.QAction(soft, self)
+                    eval("action.triggered.connect(software.locate%s)" % soft)
+                    self.menu['Setup Soft'].addAction(action)
             # Software examples:
             self.menu['Examples'] = QtWidgets.QMenu('Examples')
             self.menu['Software'].addMenu(self.menu['Examples'])
@@ -242,7 +281,7 @@ class Tray(QtWidgets.QSystemTrayIcon):
 
         # Some general menu items:
         self.addAction('menu', True,  'Documentation...', cmd.cgruDocs)
-        #self.addAction('menu', False, 'Forum...',         cmd.cgruForum)
+        self.addAction('menu', False, 'Forum...',         cmd.cgruForum)
         # System sub-menu:
         self.addMenu(self.menu['menu'],'System')
         self.addAction('System', True,'Show Info...', self.cgruInfo,'info')
@@ -318,15 +357,15 @@ class Tray(QtWidgets.QSystemTrayIcon):
         self.parent.setWindowIcon( self.icon)
 
     def activated_slot(self, reason):
-        if reason == QtWidgets.QSystemTrayIcon.ActivationReason.Trigger:
+        if reason == QtWidgets.QSystemTrayIcon.Trigger:
             return
-        elif reason == QtWidgets.QSystemTrayIcon.ActivationReason.DoubleClick:
+        elif reason == QtWidgets.QSystemTrayIcon.DoubleClick:
             render.refresh()
-        elif reason == QtWidgets.QSystemTrayIcon.ActivationReason.MiddleClick:
+        elif reason == QtWidgets.QSystemTrayIcon.MiddleClick:
             return
-        elif reason == QtWidgets.QSystemTrayIcon.ActivationReason.Context:
+        elif reason == QtWidgets.QSystemTrayIcon.Context:
             return
-        elif reason == QtWidgets.QSystemTrayIcon.ActivationReason.Unknown:
+        elif reason == QtWidgets.QSystemTrayIcon.Unknown:
             return
 
     def renderInfo(self):
