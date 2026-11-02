@@ -190,10 +190,6 @@ class Tray(QtWidgets.QSystemTrayIcon):
                             lambda checked=False, s=soft, p=path: software.startSoftAt(s, p)
                         )
                         soft_menu.addAction(action)
-                    soft_menu.addSeparator()
-                    action = QtWidgets.QAction('Default Version', self)
-                    eval("action.triggered.connect(software.start%s)" % soft)
-                    soft_menu.addAction(action)
                     self.menu['Software'].addMenu(soft_menu)
                 else:
                     if icon is None:
