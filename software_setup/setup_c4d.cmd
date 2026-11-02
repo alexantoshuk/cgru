@@ -3,17 +3,27 @@
 rem Source general for all soft directives:
 call %CGRU_LOCATION%\software_setup\setup__all.cmd
 
+if not "%C4D_LOCATION%"=="" goto :c4d_located
+
 REM Locate C4D:
 set "MAXON=%SystemDrive%\Program Files\MAXON"
-For /F "Tokens=*" %%I in ('dir /b "%MAXON%\CINEMA 4D*"') Do set APP_DIR=%MAXON%\%%I
+For /F "Tokens=*" %%I in ('dir /b "%MAXON%\CINEMA 4D*" 2^>nul') Do set APP_DIR=%MAXON%\%%I
 set "APP_EXE=%APP_DIR%\CINEMA 4D.exe"
 REM Customize C4D location:
 set "locate_file=%CGRU_LOCATION%\software_setup\locate_c4d.cmd"
 if exist "%locate_file%" call "%locate_file%"
+set "C4D_LOCATION=%APP_DIR%"
+goto :c4d_cgru
 
+:c4d_located
+echo C4D_LOCATION from environment: %C4D_LOCATION%
+set "APP_DIR=%C4D_LOCATION%"
+set "APP_EXE=%APP_DIR%\CINEMA 4D.exe"
+
+:c4d_cgru
 REM Locate C4D home folder
 set MAXON_HOME=%USERPROFILE%\AppData\Roaming\MAXON
-For /F "Tokens=*" %%I in ('dir /b "%MAXON_HOME%\CINEMA 4D*"') Do set C4D_USER_FOLDER=%MAXON_HOME%\%%I
+For /F "Tokens=*" %%I in ('dir /b "%MAXON_HOME%\CINEMA 4D*" 2^>nul') Do set C4D_USER_FOLDER=%MAXON_HOME%\%%I
 echo C4D_USER_FOLDER=%C4D_USER_FOLDER%
 
 REM Here additional folders can get specified where plugins should get copied from

@@ -11,14 +11,25 @@ if defined CGRU_LOCATION (
    )
 )
 
+if not "%NATRON_LOCATION%"=="" goto :natron_located
+
 rem Find the latest Natron:
-For /F "Tokens=*" %%I in ('dir /b "C:\Program Files\INRIA\Natron*"') Do SET "NATRON_DIR=C:\Program Files\INRIA\%%I"
+For /F "Tokens=*" %%I in ('dir /b "C:\Program Files\INRIA\Natron*" 2^>nul') Do SET "NATRON_LOCATION=C:\Program Files\INRIA\%%I"
 
-SET "NATRON_EXEC=%NATRON_DIR%\bin\Natron.exe"
-
+SET "NATRON_DIR=%NATRON_LOCATION%"
 SET "APP_DIR=%NATRON_DIR%"
-SET "APP_EXE=%NATRON_EXEC%"
+SET "APP_EXE=%NATRON_DIR%\bin\Natron.exe"
 
-rem Custon locate:
+rem Custom locate:
 SET "locate_file=%CGRU_LOCATION%\software_setup\locate_natron.cmd"
 if exist %locate_file% call %locate_file%
+SET "NATRON_LOCATION=%APP_DIR%"
+goto :natron_done
+
+:natron_located
+echo NATRON_LOCATION from environment: %NATRON_LOCATION%
+SET "NATRON_DIR=%NATRON_LOCATION%"
+SET "APP_DIR=%NATRON_LOCATION%"
+SET "APP_EXE=%NATRON_LOCATION%\bin\Natron.exe"
+
+:natron_done

@@ -1,6 +1,9 @@
 rem Source general for all soft directives:
 call %CGRU_LOCATION%\software_setup\setup__all.cmd
 
+rem If MAYA_LOCATION already set (Keeper version / farm job) — use it.
+if not "%MAYA_LOCATION%"=="" goto :maya_located
+
 rem Set Maya version:
 set "MAYA_VERSION=2015"
 
@@ -15,6 +18,17 @@ set "locate_file=%CGRU_LOCATION%\software_setup\locate_maya.cmd"
 if exist %locate_file% call %locate_file%
 
 set "MAYA_LOCATION=%APP_DIR%"
+goto :maya_cgru
+
+:maya_located
+echo MAYA_LOCATION from environment: %MAYA_LOCATION%
+set "APP_DIR=%MAYA_LOCATION%"
+set "APP_EXE=%MAYA_LOCATION%\bin\maya.exe"
+
+:maya_cgru
+rem Try to derive MAYA_VERSION from folder name (Maya2024 -> 2024)
+for %%I in ("%MAYA_LOCATION%") do set "MAYA_FOLDER=%%~nxI"
+set "MAYA_VERSION=%MAYA_FOLDER:Maya=%"
 
 rem Set CGRU Maya scripts location:
 set "MAYA_CGRU_LOCATION=%CGRU_LOCATION%\plugins\maya"

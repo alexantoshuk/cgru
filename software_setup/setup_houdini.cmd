@@ -8,13 +8,21 @@ if "%HOUDINI_LOCATION%"=="" goto :houdini_locate
 
 echo HOUDINI_LOCATION from environment: %HOUDINI_LOCATION%
 set "APP_DIR=%HOUDINI_LOCATION%"
-set "APP_EXE=%HOUDINI_LOCATION%\bin\houdini.exe"
+if exist "%HOUDINI_LOCATION%\bin\houdinifx.exe" (
+    set "APP_EXE=%HOUDINI_LOCATION%\bin\houdinifx.exe"
+) else (
+    set "APP_EXE=%HOUDINI_LOCATION%\bin\houdini.exe"
+)
 goto :houdini_cgru
 
 :houdini_locate
 For /F "Tokens=*" %%I in ('dir /b "C:\Program Files\Side Effects Software\Houdini 1*" 2^>nul') Do set "HOUDINI_LOCATION=C:\Program Files\Side Effects Software\%%I"
 set "APP_DIR=%HOUDINI_LOCATION%"
-set "APP_EXE=%HOUDINI_LOCATION%\bin\houdini.exe"
+if exist "%HOUDINI_LOCATION%\bin\houdinifx.exe" (
+    set "APP_EXE=%HOUDINI_LOCATION%\bin\houdinifx.exe"
+) else (
+    set "APP_EXE=%HOUDINI_LOCATION%\bin\houdini.exe"
+)
 
 rem Keeper "Setup Soft" override (default version for this machine):
 set "locate_file=%CGRU_LOCATION%\software_setup\locate_houdini.cmd"
