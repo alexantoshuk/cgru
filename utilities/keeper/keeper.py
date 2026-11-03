@@ -11,46 +11,44 @@ if sys.platform.find('win') == 0 and sys.executable.find('pythonw') != -1:
 		pass
 
 # Write qt.conf file on MS Windows:
+# Python/PySide needs Prefix = site-packages/PySide*, while afwatch needs CGRU/dll
+# (dll/ ships only Core/Gui/Widgets/Network/Multimedia used by afwatch).
 if sys.platform.find('win') == 0:
-	qtconfs = []
-	qtconfs.append(sys.prefix + '/qt.conf')
-	af_root = os.getenv('AF_ROOT')
-	if af_root:
-		qtconfs.append(os.path.join(af_root, 'bin', 'qt.conf'))
 	cgru_loc = os.getenv('CGRU_LOCATION')
-	# Prefer CGRU/dll from the Windows release package; fall back to PySide2
-	# (git/source clones often do not include dll/ or afanasy/bin).
-	qtdll = None
-	if cgru_loc and os.path.isdir(os.path.join(cgru_loc, 'dll')):
-		qtdll = cgru_loc.replace('\\', '/') + '/dll'
-	else:
-		pyside = os.path.join(sys.prefix, 'Lib', 'site-packages', 'PySide2')
-		if not os.path.isdir(pyside):
-			pyside = os.path.join(sys.prefix, 'Lib', 'site-packages', 'PySide6')
-		if os.path.isdir(pyside):
-			qtdll = pyside.replace('\\', '/')
-			print('WARNING: CGRU dll/ not found, using Qt from: ' + qtdll)
-		elif cgru_loc:
-			qtdll = cgru_loc.replace('\\', '/') + '/dll'
-		else:
-			qtdll = 'dll'
-	qtconf_txt = '[Paths]\nPrefix = ' + qtdll + '\n'
-	for qtconf in qtconfs:
-		qtconf_dir = os.path.dirname(qtconf)
+	af_root = os.getenv('AF_ROOT')
+
+	def _write_qt_conf(path, prefix):
+		qtconf_dir = os.path.dirname(path)
 		if qtconf_dir and not os.path.isdir(qtconf_dir):
 			try:
 				os.makedirs(qtconf_dir)
 			except Exception:
-				continue
+				return
 		try:
-			if os.path.isfile(qtconf):
-				os.remove(qtconf)
-			qtconf_file = open(qtconf, mode='w')
-			qtconf_file.write(qtconf_txt)
-			qtconf_file.close()
+			if os.path.isfile(path):
+				os.remove(path)
+			with open(path, mode='w') as qtconf_file:
+				qtconf_file.write('[Paths]\nPrefix = %s\n' % prefix)
 		except Exception as err:
-			print('WARNING: Can`t write "%s": %s' % (qtconf, err))
+			print('WARNING: Can`t write "%s": %s' % (path, err))
 
+	pyside = os.path.join(sys.prefix, 'Lib', 'site-packages', 'PySide6')
+	if not os.path.isdir(pyside):
+		pyside = os.path.join(sys.prefix, 'Lib', 'site-packages', 'PySide2')
+	dll_prefix = None
+	if cgru_loc and os.path.isdir(os.path.join(cgru_loc, 'dll')):
+		dll_prefix = cgru_loc.replace('\\', '/') + '/dll'
+	python_prefix = pyside.replace('\\', '/') if os.path.isdir(pyside) else dll_prefix
+	if python_prefix is None:
+		python_prefix = (cgru_loc.replace('\\', '/') + '/dll') if cgru_loc else 'dll'
+	if dll_prefix is None:
+		dll_prefix = python_prefix
+		if os.path.isdir(pyside):
+			print('WARNING: CGRU dll/ not found, using Qt from: ' + dll_prefix)
+
+	_write_qt_conf(sys.prefix + '/qt.conf', python_prefix)
+	if af_root:
+		_write_qt_conf(os.path.join(af_root, 'bin', 'qt.conf'), dll_prefix)
 if sys.platform.find('darwin') == 0:
     try:
         import AppKit
