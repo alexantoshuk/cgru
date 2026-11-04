@@ -231,7 +231,7 @@ def getDefaultLocation(soft):
     return None
 
 
-def _shortVersionLabel(soft, label):
+def shortVersionLabel(soft, label):
     """'Houdini 21.0.512' -> '21.0.512'; 'Nuke15.0v5' -> '15.0v5'."""
     prefixes = [
         soft,
@@ -255,8 +255,8 @@ def getDefaultVersionLabel(soft):
     loc_norm = os.path.normpath(loc)
     for label, path in getVersions(soft):
         if os.path.normpath(path) == loc_norm:
-            return _shortVersionLabel(soft, label)
-    return _shortVersionLabel(soft, os.path.basename(loc))
+            return shortVersionLabel(soft, label)
+    return shortVersionLabel(soft, os.path.basename(loc))
 
 
 def writeLocateFile(soft, app_dir, app_exe=None):

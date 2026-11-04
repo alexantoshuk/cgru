@@ -175,9 +175,23 @@ class Tray(QtWidgets.QSystemTrayIcon):
             self.menu['menu'].addSeparator()
 
             for soft in software.Names:
-                icon = software.getIcon(soft)
                 versions = software.getVersions(soft)
-                if versions:
+                if not versions:
+                    continue
+                icon = software.getIcon(soft)
+                if len(versions) == 1:
+                    label, path = versions[0]
+                    short = software.shortVersionLabel(soft, label)
+                    name = '%s %s' % (soft, short)
+                    if icon is None:
+                        action = QtWidgets.QAction(name, self)
+                    else:
+                        action = QtWidgets.QAction(icon, name, self)
+                    action.triggered.connect(
+                        lambda checked=False, s=soft, p=path: software.startSoftAt(s, p)
+                    )
+                    self.menu['Software'].addAction(action)
+                else:
                     soft_menu = QtWidgets.QMenu(soft, self.menu['Software'])
                     if icon is not None:
                         soft_menu.setIcon(icon)
@@ -191,43 +205,35 @@ class Tray(QtWidgets.QSystemTrayIcon):
                         )
                         soft_menu.addAction(action)
                     self.menu['Software'].addMenu(soft_menu)
-                else:
-                    if icon is None:
-                        action = QtWidgets.QAction(soft, self)
-                    else:
-                        action = QtWidgets.QAction(icon, soft, self)
-                    eval("action.triggered.connect(software.start%s)" % soft)
-                    self.menu['Software'].addAction(action)
             # Software setup:
             self.menu['Setup Soft'] = QtWidgets.QMenu('Setup Soft')
             self.menu['Software'].addMenu(self.menu['Setup Soft'])
             for soft in software.Names:
                 versions = software.getVersions(soft)
-                if versions:
-                    setup_menu = QtWidgets.QMenu(soft, self.menu['Setup Soft'])
-                    default_loc = software.getDefaultLocation(soft)
-                    for label, path in versions:
-                        action = QtWidgets.QAction(label, self)
-                        if default_loc and os.path.normpath(path) == os.path.normpath(default_loc):
-                            action.setCheckable(True)
-                            action.setChecked(True)
-                        action.triggered.connect(
-                            lambda checked=False, s=soft, p=path: software.setDefaultVersion(s, p)
-                        )
-                        setup_menu.addAction(action)
-                    setup_menu.addSeparator()
-                    action = QtWidgets.QAction('Browse executable...', self)
-                    eval("action.triggered.connect(software.locate%s)" % soft)
+                if not versions:
+                    continue
+                setup_menu = QtWidgets.QMenu(soft, self.menu['Setup Soft'])
+                default_loc = software.getDefaultLocation(soft)
+                for label, path in versions:
+                    action = QtWidgets.QAction(label, self)
+                    if default_loc and os.path.normpath(path) == os.path.normpath(default_loc):
+                        action.setCheckable(True)
+                        action.setChecked(True)
+                    action.triggered.connect(
+                        lambda checked=False, s=soft, p=path: software.setDefaultVersion(s, p)
+                    )
                     setup_menu.addAction(action)
-                    self.menu['Setup Soft'].addMenu(setup_menu)
-                else:
-                    action = QtWidgets.QAction(soft, self)
-                    eval("action.triggered.connect(software.locate%s)" % soft)
-                    self.menu['Setup Soft'].addAction(action)
+                setup_menu.addSeparator()
+                action = QtWidgets.QAction('Browse executable...', self)
+                eval("action.triggered.connect(software.locate%s)" % soft)
+                setup_menu.addAction(action)
+                self.menu['Setup Soft'].addMenu(setup_menu)
             # Software examples:
             self.menu['Examples'] = QtWidgets.QMenu('Examples')
             self.menu['Software'].addMenu(self.menu['Examples'])
             for soft in software.Names:
+                if not software.getVersions(soft):
+                    continue
                 action = QtWidgets.QAction(soft, self)
                 eval("action.triggered.connect(software.example%s)" % soft)
                 self.menu['Examples'].addAction(action)
